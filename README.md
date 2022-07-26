@@ -13,4 +13,9 @@ Nuget package - https://www.nuget.org/packages/WhatsappMessageCounterLibrary/
     dotnet add package WhatsappMessageCounterLibrary --version 1.0.0
 # Usage
 After you've successfully installed the package, 
-
+```c#
+    private static void Main()
+    {
+        AsyncTest().Wait();
+    }
+```
