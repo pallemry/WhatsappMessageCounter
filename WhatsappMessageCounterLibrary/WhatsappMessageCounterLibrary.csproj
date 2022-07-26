@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <Authors>pallemry, github</Authors>
+    <Company>None</Company>
+    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <Description>Gives information about exported whatsapp message file. </Description>
+  </PropertyGroup>
+
+</Project>
