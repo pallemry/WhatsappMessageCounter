@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text.Json;
 
 using WhatsappMessageCounterLibrary.Data_Classes;
@@ -14,21 +15,26 @@ public class MessageCounter
     /// Initializes a new instance of the <see cref="MessageCounter"> with the specified <see cref="Config"/>
     /// </summary>
     /// <param name="config">The configuration the message counter will be initialized with</param>
-    public MessageCounter(Config config) : this()
+    public MessageCounter(Config config) 
     {
         Config = config;
+        ProgressionInformation = new ProgressionInformation();
+        if (!Directory.Exists(config.AppDataPath))
+            Directory.CreateDirectory(config.AppDataPath);
     }
 
-    private MessageCounter() => ProgressionInformation = new ProgressionInformation();
 
     /// <summary>
     /// Scans a whatsapp exported chat file, and then returns a result object, containing the results of the scan.
     /// Optionally you can save the file if you specify <see cref="fileToSaveResultsIn"/>
     /// </summary>
-    /// <param name="fileName"></param>
-    /// <param name="fileToSaveResultsIn"></param>
-    /// <param name="specialCases"></param>
-    /// <returns></returns>
+    /// <param name="fileName">The full file name and path to extract information from. Must end with *.txt or with no extension at all.</param>
+    /// <param name="fileToSaveResultsIn">The name file to save the results in. No extension or path is required.</param>
+    /// <param name="specialCases">The special cases, in which if a user with a key name is found,
+    /// it is replaced by the value in the return value.</param>
+    /// <returns>Returns a <see cref="ScanResults"/> object, representing the data collected in the scan.</returns>
+    /// <exception cref="FileNotFoundException">In case the <see cref="fileName"/></exception>
+    /// <exception cref="ArgumentException"></exception>
     public async Task<ScanResults> ScanMessagesAsync(string fileName, string fileToSaveResultsIn,
                                                      Dictionary<string, string> specialCases = null)
     {
@@ -54,60 +60,6 @@ public class MessageCounter
 
             for (var i = 0; i < lines.Length; i++)
             {
-                var line = lines[i];
-                var date = new DateTime();
-
-                string dateRaw;
-
-                try
-                {
-                    dateRaw = line[..Config.DateMaxLength];
-                }
-                catch (Exception e)
-                {
-                    if (e is ArgumentOutOfRangeException) currentUser.TotalWords += line.Split(' ').Length;
-                    continue;
-                }
-
-                if (!MessageConsoleCounter.IsValidDate(dateRaw.Replace("-", "").Trim()).IsValid)
-                {
-                    currentUser.TotalWords += line.Split(' ').Length;
-                    continue;
-                }
-
-                var incrementer = date.Month.ToString().Length > 1 ? 0 : 1;
-                line = line.Replace(dateRaw, "");
-                var indexOf = line.IndexOf(":", StringComparison.Ordinal);
-                string userName, originalUserName;
-
-                if (indexOf != -1)
-                {
-                    userName = line.Substring(0, indexOf).Replace("-", "").Trim();
-                    originalUserName = userName;
-                }
-                else
-                    continue;
-
-                if (specialCases.ContainsKey(userName)) userName = specialCases[userName];
-
-
-                if (!records.ContainsKey(userName))
-                {
-                    currentUser =
-                        new MessageInformationCounter { TotalMessages = 1, OriginalUserName = originalUserName };
-                    records.Add(userName, currentUser);
-                }
-                else
-                {
-                    records[userName].TotalMessages++;
-                    currentUser = records[userName];
-                }
-
-                var words = line.Replace(originalUserName, "").Split(' ').ToList();
-                words.RemoveAll(s => string.IsNullOrEmpty(s.Trim()) ||
-                                     s.Trim().ToLower() is ":" or "-" or "<media" or "omitted>");
-                currentUser.TotalWords += words.Count;
-
                 if (i >= max)
                 {
                     if (prec < 100) prec++;
@@ -136,6 +88,61 @@ public class MessageCounter
                         PrintLine(progressionAsString);
                     }
                 }
+
+                var line = lines[i];
+
+                var date = new DateTime();
+                string dateRaw;
+
+                try
+                {
+                    dateRaw = line[..Config.DateMaxLength];
+                }
+                catch (Exception e)
+                {
+                    if (e is ArgumentOutOfRangeException) currentUser.TotalWords += line.Split(' ').Length;
+                    continue;
+                }
+
+                if (!IsValidDate(dateRaw.Replace("-", "").Trim(), Config.AllowBracesInDate).IsValid)
+                {
+                    currentUser.TotalWords += line.Split(' ').Length;
+                    continue;
+                }
+
+                var incrementer = date.Month.ToString().Length > 1 ? 0 : 1;
+
+                line = line.Replace(dateRaw, "");
+                var indexOf = line.IndexOf(":", StringComparison.Ordinal);
+                string userName, originalUserName;
+                if (indexOf != -1)
+                {
+                    userName = line.Substring(0, indexOf).Replace("-", "").Trim();
+                    originalUserName = userName;
+                }
+                else
+                    continue;
+
+                if (specialCases.ContainsKey(userName)) userName = specialCases[userName];
+
+
+                if (!records.ContainsKey(userName))
+                {
+                    currentUser =
+                        new MessageInformationCounter { TotalMessages = 1, OriginalUserName = originalUserName };
+                    records.Add(userName, currentUser);
+                }
+                else
+                {
+                    records[userName].TotalMessages++;
+                    currentUser = records[userName];
+                }
+
+                var words = line.Replace(originalUserName, "").Split(' ').ToList();
+
+                words.RemoveAll(s => string.IsNullOrEmpty(s.Trim()) ||
+                                     s.Trim().ToLower() is ":" or "-" or "<media" or "omitted>");
+                currentUser.TotalWords += words.Count;
             }
 
             if (Config.ShouldPrintToConsole)
@@ -276,5 +283,43 @@ public class MessageCounter
             Config.PrintMethod(line);
     }
 
+    internal static IsValidDateResult IsValidDate(string date, bool allowBraces = false)
+    {
+        if (allowBraces)
+        {
+            date = date.Replace("[", "").Replace("]", "");
+            date = date.Replace("(", "").Replace(")", "");
+            date = date.Replace("{", "").Replace("}", "");
+        }
+        bool isValidGb, isValidUs;
+        DateTime? dt = null;
+        try
+        {
+            dt = DateTime.Parse(date, CultureInfo.GetCultureInfo("en-GB"));
+            isValidGb = true;
+        }
+        catch
+        {
+            isValidGb = false;
+        }
+        try
+        {
+            dt  = DateTime.Parse(date, CultureInfo.GetCultureInfo("en-US"));
+            isValidUs = true;
+        }
+        catch
+        {
+            isValidUs = false;
+        }
 
+        var cultureString = isValidGb ? "en-GB" :
+            isValidUs                 ? "en-US" : null;
+
+
+        return new IsValidDateResult(isValidGb || isValidUs, date, dt, cultureString);
+    }
+
+    internal static bool ValidName(string fileName, string sourceFolder) => !string.IsNullOrEmpty(fileName) &&
+                                                                            fileName.IndexOfAny(Path.GetInvalidFileNameChars()) < 0 &&
+                                                                            !File.Exists(Path.Combine(sourceFolder, fileName));
 }

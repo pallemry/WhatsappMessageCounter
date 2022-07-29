@@ -1,26 +1,31 @@
-﻿using WhatsappMessageCounterLibrary.Counter;
+﻿using System.Runtime.CompilerServices;
+
+using WhatsappMessageCounterLibrary.Counter;
 using WhatsappMessageCounterLibrary.Data_Classes;
 
-namespace WhatsappMessageCounterLibrary;
+namespace MessageCounterTester;
 
-internal static class Program
+static class Program
 {
-    private static void Main()
+    static void Main()
     {
-        AsyncTest().Wait();
+        AsyncMain().Wait();
     }
 
-    private static async Task AsyncTest()
+    static async Task AsyncMain()
     {
-        
-
-        MessageCounter counter = new MessageCounter(Config.GetConfig(false));
+        Config conf;
+        conf = new Config(false);
+        conf.AllowBracesInDate = true;
+        conf.DateMaxLength = "[09/07/2022, 22:12:22] ".Length;
+        conf.SaveOption = SaveOption.None;
+        var counter = new MessageCounter(conf);
         counter.OnProgressChanged += (sender, args) =>
         {
             System.Console.Write("|");
             Console.Title = $"{args.Precentage}%";
         };
-        var result = await counter.ScanMessagesAsync(Console.ReadLine(), "Test1234");
+        var result = await counter.ScanMessagesAsync(Console.ReadLine(), "");
         var sortedRecords = result.SortedRecords;
 
         int totalMessages = sortedRecords.Sum(pair => pair.Value.TotalMessages);
