@@ -67,6 +67,7 @@ If you're getting nonsense results, try changing the `Config.DateMaxLength` to 1
 |Property|`Action<string> PrintLineMethod { get; set; }`|The method the counter will use to print values in a new line|-
 |Property|`Func<string?> ReadLineMethod { get; set; }`|The method the counter will use to read (input) values from the user|-
 |Property|`Action ClearMethod { get; set; }`|The method the counter will use clear all the contents of the console/stream|-
+|Property|`bool AllowBracesInDate { get; set; }`|Wether to allow(ignore) characters like "{..}", "[..]" and "()" while reading the date from the source file|-
 
 # Refernces
 
