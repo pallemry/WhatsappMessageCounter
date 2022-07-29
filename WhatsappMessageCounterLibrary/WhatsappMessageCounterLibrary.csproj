@@ -10,12 +10,13 @@
     <Description>Gives information about exported whatsapp message file. </Description>
     <RepositoryUrl>https://github.com/pallemry/WhatsappMessageCounter</RepositoryUrl>
     <PackageTags>whatsapp;messagecounter;</PackageTags>
-    <PackageReleaseNotes>Changed message counter to create the App data directory in case it is not yet created.</PackageReleaseNotes>
+    <PackageReleaseNotes> - Added braces style
+ - Fixed MessageCounter.OnProgressChanged bug.</PackageReleaseNotes>
     <PackageIcon>iconmonstr-eye-9.png</PackageIcon>
     <PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <FileVersion></FileVersion>
-    <Version>1.0.2</Version>
+    <Version>1.0.3</Version>
   </PropertyGroup>
 
   <ItemGroup>
