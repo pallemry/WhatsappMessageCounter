@@ -12,7 +12,7 @@ Extracts and scans informatin from an exported whatsapp message chat file. Can e
 # Installation
 Nuget package - https://www.nuget.org/packages/WhatsappMessageCounterLibrary/
 
-    dotnet add package WhatsappMessageCounterLibrary --version 1.0.2
+    dotnet add package WhatsappMessageCounterLibrary --version 1.0.3
 # Usage
 After you've successfully installed the package, start by importing the the namespaces `WhatsappMessageCounterLibrary.Counter` and `WhatsappMessageCounterLibrary.Data_Classes` by using a [`using statement`](https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/using-statement) creating a new [`Config`](https://github.com/pallemry/WhatsappMessageCounter/blob/main/WhatsappMessageCounterLibrary/Data%20Classes/Config.cs) object like this:
 ```csharp
